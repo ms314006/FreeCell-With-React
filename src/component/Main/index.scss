@@ -1,3 +1,47 @@
-.title {
-  color: red;
+.pokerTable {
+  display: flex;
+  justify-content: center;
 }
+
+.pokerColumn {
+  width: 100px;
+  border: 1px solid #000000;
+  margin: 0px 10px;
+}
+
+.pokerCard {
+  margin-bottom: -100px;
+  width: 100px;
+  height: 120px;
+  background-color: #afa;
+  border: 1px solid #aca;
+}
+
+.top_block {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+
+  .answer_block {
+    display: flex;
+  
+    .answer {
+      width: 100px;
+      height: 120px;
+      background-color: #faa;
+      border: 1px solid #caa;
+    }
+  }
+  
+  .temp_block {
+    display: flex;
+  
+    .temp {
+      width: 100px;
+      height: 120px;
+      background-color: #aaf;
+      border: 1px solid #aac;
+    }
+  }
+}
+
