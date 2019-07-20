@@ -1,0 +1,36 @@
+.sideMenu {
+  display: grid;
+  grid-template-rows: 4fr 2fr;
+  background-color: #D8E6BA;
+
+  .timeBlock {
+    margin-top: 80px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #99A779;
+    font-family: 'Fascinate', cursive;
+
+    .title {
+      font-size: 36px;
+    }
+    .time {
+      font-size: 60px;
+    }
+  }
+
+  .controlButtonBlock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .button {
+    margin-top: 32px;
+    background-color: #99A779;
+    color: #E3EDCD;
+    border: none;
+    border-radius:10px;
+    font-size: 36px;
+  }
+}
