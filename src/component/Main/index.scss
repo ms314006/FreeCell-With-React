@@ -1,39 +1,6 @@
-.game_table {
-  border: 1px solid #000000;
-}
-
-.put_card_block {
-  border-radius: 1em;
-  width: 120px;
-  height: 160px;
-}
-
-.top_block {
-  width: 1056px;
-  border: 1px solid #000000;
-  display: flex;
-
-  .default_block {
-    background-color: #afa;
-    height: 450px;
-    margin: 12px;
-  }
-}
-
-.bottom_block {
-  margin-top: 30px;
-  width: 1056px;
-  display: flex;
-  justify-content: space-between;
-
-  div {
-    display: flex;
-    margin: 4px;
-    .temp_block {
-      background-color: #faa;
-    }
-    .done_block {
-      background-color: #aaf;
-    }
-  }
+.main_block {
+  display: grid;
+  grid-template-columns: 800px 1fr;
+  background-color: #E3EDCD;
+  height: 100%;
 }
