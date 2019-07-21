@@ -20,7 +20,7 @@ const DraggableBox = (props) => {
   } = props;
 
   const getPokerSuit = data => data.split('_')[0];
-  const getPokerNumber = data => data.split('_')[1];
+  const getPokerNumber = data => Number(data.split('_')[1]);
   const getPokerColorWithSuit = (suit) => {
     switch (suit) {
       case 'spades':
