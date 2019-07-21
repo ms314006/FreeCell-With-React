@@ -146,13 +146,12 @@ const GameTable = (props) => {
       if ((getOriginColumnIndex() === 0 && x < 0) || (getOriginColumnIndex() === 7 && x > 0)) {
         return getOriginColumnIndex();
       }
-
       // 之後要算移動多少
       const movePositionX = Math.floor((x + 40) / 100);
       return getOriginColumnIndex() + movePositionX;
     };
 
-    const trunToOverIndex = () => getNewColumnIndex() - 4;
+    const trunToOverIndex = index => index - 4;
 
     const isMoveToTempOrOverBlock = () => {
       switch (item.cardInformation.type) {
@@ -217,7 +216,7 @@ const GameTable = (props) => {
       const targetColumn = [moveOutColumn[moveOutColumn.length - 1]];
       moveOutColumn = moveOutColumn.slice(0, moveOutColumn.length - 1);
       cloneQuestArray.splice(getOriginColumnIndex(), 1, moveOutColumn);
-      cloneOverArray.splice(trunToOverIndex(), 1, targetColumn);
+      cloneOverArray.splice(trunToOverIndex(getNewColumnIndex()), 1, targetColumn);
       setQuestionLayout(cloneQuestArray);
       setOverLayout(cloneOverArray);
     };
@@ -228,7 +227,41 @@ const GameTable = (props) => {
       const moveOutColumn = cloneTempArray[getOriginColumnIndex()];
       const targetColumn = [moveOutColumn[moveOutColumn.length - 1]];
       cloneTempArray.splice(getOriginColumnIndex(), 1, []);
-      cloneOverArray.splice(trunToOverIndex(), 1, targetColumn);
+      cloneOverArray.splice(trunToOverIndex(getNewColumnIndex()), 1, targetColumn);
+      setTempLayout(cloneTempArray);
+      setOverLayout(cloneOverArray);
+    };
+
+    const moveOverToQuestion = () => {
+      const cloneQuestArray = questionLayout.map(column => column.map(row => row));
+      const cloneOverArray = overLayout.map(column => column.map(row => row));
+      let moveOutColumn = cloneOverArray[trunToOverIndex(getOriginColumnIndex())];
+      const targetColumn = cloneQuestArray[getNewColumnIndex()];
+      targetColumn.push(moveOutColumn[0]);
+      if (getPokerNumber(moveOutColumn[0]) === 1) {
+        moveOutColumn = moveOutColumn.slice(0, getOriginRowIndex());
+      } else {
+        moveOutColumn = [`${getPokerSuit(moveOutColumn[0])}_${getPokerNumber(moveOutColumn[0]) - 1}`];
+      }
+      cloneOverArray.splice(trunToOverIndex(getOriginColumnIndex()), 1, moveOutColumn);
+      cloneQuestArray.splice(getNewColumnIndex(), 1, targetColumn);
+      setQuestionLayout(cloneQuestArray);
+      setOverLayout(cloneOverArray);
+    };
+
+    const moveOverToTemp = () => {
+      const cloneTempArray = tempLayout.map(column => column.map(row => row));
+      const cloneOverArray = overLayout.map(column => column.map(row => row));
+      let moveOutColumn = cloneOverArray[trunToOverIndex(getOriginColumnIndex())];
+      const targetColumn = cloneTempArray[getNewColumnIndex()];
+      targetColumn.push(moveOutColumn[moveOutColumn.length - 1]);
+      if (getPokerNumber(moveOutColumn[0]) === 1) {
+        moveOutColumn = moveOutColumn.slice(0, getOriginRowIndex());
+      } else {
+        moveOutColumn = [`${getPokerSuit(moveOutColumn[0])}_${getPokerNumber(moveOutColumn[0]) - 1}`];
+      }
+      cloneOverArray.splice(trunToOverIndex(getOriginColumnIndex()), 1, moveOutColumn);
+      cloneTempArray.splice(getNewColumnIndex(), 1, targetColumn);
       setTempLayout(cloneTempArray);
       setOverLayout(cloneOverArray);
     };
@@ -246,6 +279,10 @@ const GameTable = (props) => {
           return ['temp', 'temp'];
         case (item.cardInformation.type === 'temp' && getNewColumnIndex() > 3 && isMoveToTempOrOverBlock()):
           return ['temp', 'over'];
+        case (item.cardInformation.type === 'over' && !isMoveToTempOrOverBlock()):
+          return ['over', 'question'];
+        case (item.cardInformation.type === 'over' && getNewColumnIndex() < 4 && isMoveToTempOrOverBlock()):
+          return ['over', 'temp'];
         case (!isMoveToTempOrOverBlock()):
           return ['question', 'question'];
         case (getNewColumnIndex() < 4 && isMoveToTempOrOverBlock()):
@@ -269,6 +306,12 @@ const GameTable = (props) => {
           break;
         case (moveout === 'temp' && target === 'over'):
           moveTempToOver();
+          break;
+        case (moveout === 'over' && target === 'question'):
+          moveOverToQuestion();
+          break;
+        case (moveout === 'over' && target === 'temp'):
+          moveOverToTemp();
           break;
         case (moveout === 'question' && target === 'question'):
           moveQuestionToQuestion();
@@ -314,11 +357,11 @@ const GameTable = (props) => {
           break;
         }
         case 'over': {
-          const targetBlockColumn = over[trunToOverIndex()];
+          const targetBlockColumn = over[trunToOverIndex(getNewColumnIndex())];
           const targetBlockLastCard = targetBlockColumn[targetBlockColumn.length - 1];
           const targetBlockLastCardSuit = getPokerSuit(targetBlockLastCard);
           const targetBlockLastCardNumber = getPokerNumber(targetBlockLastCard);
-          const targetBlockCorrespondSuit = getPokerSuitWithIndex(trunToOverIndex());
+          const targetBlockCorrespondSuit = getPokerSuitWithIndex(trunToOverIndex(getNewColumnIndex()));
           const moveOutCardSuit = getPokerSuit(item.cardInformation.cardId);
           const moveOutCardNumber = getPokerNumber(item.cardInformation.cardId);
           if ((targetBlockColumn.length === 0 && moveOutCardNumber === 1
@@ -346,16 +389,30 @@ const GameTable = (props) => {
   };
 
   const producePokerCardColumn = (column, columnIndex, type) => {
+
     if (column.length === 0) {
       return type === 'over' && column.length === 0
         ? getPokerSuitSvgWith(getPokerSuitWithIndex(columnIndex), '#99A779', 48) : null;
     }
+
+    const getCardId = (cardInformation) => {
+      const { arrayIndex, } = cardInformation;
+      switch (cardInformation.type) {
+        case 'question':
+        case 'temp':
+          return `${arrayIndex.column}_${arrayIndex.row}`;
+        case 'over':
+          return `${arrayIndex.column + 4}_${arrayIndex.row}`;
+        default:
+          throw new Error(`Can not get CardId type: ${type}`);
+      }
+    };
+
     let currentRowIndex = -1;
     const produceSingleCard = () => {
       const isCanDrap = () => {
         switch (type) {
           case 'over':
-            return false;
           case 'temp':
             return true;
           case 'question': {
@@ -391,7 +448,7 @@ const GameTable = (props) => {
         <Card
           canDrag={isCanDrap()}
           key={currentRowIndex}
-          id={`${columnIndex}_${currentRowIndex}`}
+          id={getCardId(cardInformation)}
           cardInformation={cardInformation}
           position={type === 'question'
             ? getQuestBlockPosition(columnIndex, currentRowIndex) : getTempOrOverBlockPosition()
@@ -407,7 +464,6 @@ const GameTable = (props) => {
   const moveBox = useCallback(
     (item, left, top) => {
       moveCardPosition(item, left, top);
-      
     },
     [questionLayout, tempLayout, overLayout]
   );
