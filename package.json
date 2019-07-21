@@ -9,6 +9,7 @@
     }
   },
   "scripts": {
+    "start": "webpack-dev-server",
     "test": "jest",
     "coverage": "jest --coverage && cat ./coverage/lcov.info | coveralls"
   },
