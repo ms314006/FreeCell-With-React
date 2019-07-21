@@ -21,7 +21,6 @@ const GameTable = (props) => {
 
   const [overLayout, setOverLayout] = useState([[], [], [], []]);
 
-
   const [operationRecord, setOperationRecord] = useState([{
     recordNumber: 0,
     questionLayout: [
@@ -65,6 +64,19 @@ const GameTable = (props) => {
     }
   };
 
+  const getPokerColorWithSuit = (suit) => {
+    switch (suit) {
+      case 'spades':
+      case 'club':
+        return '#8497C6';
+      case 'heart':
+      case 'diamond':
+        return '#EE957E';
+      default:
+        throw new Error(`Can not get color with suit name: ${suit}`);
+    }
+  };
+
   const getPokerSuitSvgWith = (suitType, color, size = 20) => {
     let correspondSVG;
     switch (suitType) {
@@ -89,6 +101,9 @@ const GameTable = (props) => {
       </svg>
     );
   };
+
+  const getPokerSuit = (data = '') => data.split('_')[0];
+  const getPokerNumber = (data = '') => Number(data.split('_')[1]);
 
   const addOperationRecord = () => {
     const cloneOperationRecord = JSON.parse(JSON.stringify(operationRecord));
@@ -123,7 +138,7 @@ const GameTable = (props) => {
 
     const isMoveToTempOrOverBlock = () => {
       switch (item.cardInformation.type) {
-        case 'quest':
+        case 'question':
           return y + (getOriginRowIndex() * 30) >= 460;
         case 'temp':
         case 'over':
@@ -205,7 +220,7 @@ const GameTable = (props) => {
       switch (true) {
         case (getOriginColumnIndex() === getNewColumnIndex() && item.cardInformation.type === 'temp' && isMoveToTempOrOverBlock()):
           return ['temp', 'sameColumnBlock'];
-        case (getOriginColumnIndex() === getNewColumnIndex() && item.cardInformation.type === 'quest' && !isMoveToTempOrOverBlock()):
+        case (getOriginColumnIndex() === getNewColumnIndex() && item.cardInformation.type === 'question' && !isMoveToTempOrOverBlock()):
           return ['question', 'sameColumnBlock'];
         case (item.cardInformation.type === 'temp' && !isMoveToTempOrOverBlock()):
           return ['temp', 'question'];
@@ -217,7 +232,7 @@ const GameTable = (props) => {
           return ['question', 'question'];
         case (getNewColumnIndex() < 4 && isMoveToTempOrOverBlock()):
           return ['question', 'temp'];
-        case (item.cardInformation.type === 'quest' && getNewColumnIndex() > 3 && isMoveToTempOrOverBlock()):
+        case (item.cardInformation.type === 'question' && getNewColumnIndex() > 3 && isMoveToTempOrOverBlock()):
           return ['question', 'over'];
         default:
           throw new Error('Can not get curreponse action');
@@ -228,8 +243,6 @@ const GameTable = (props) => {
     const moveCardToTargetBlock = () => {
       const [moveout, target] = getMoveOutBlcokAndTargetBlock();
       switch (true) {
-        case (target === 'sameColumnBlock'):
-          return;
         case (moveout === 'temp' && target === 'question'):
           moveTempToQuestion();
           break;
@@ -255,23 +268,9 @@ const GameTable = (props) => {
 
     // 檢查
     const isCanMove = (question, temp, over) => {
-      const getPokerSuit = (data = '') => data.split('_')[0];
-      const getPokerNumber = (data = '') => Number(data.split('_')[1]);
-      const getPokerColorWithSuit = (suit) => {
-        switch (suit) {
-          case 'spades':
-          case 'club':
-            return '#8497C6';
-          case 'heart':
-          case 'diamond':
-            return '#EE957E';
-          default:
-            throw new Error(`Can not get color with suit name: ${suit}`);
-        }
-      };
       const [, target] = getMoveOutBlcokAndTargetBlock();
-      switch (true) {
-        case (target === 'question'): {
+      switch (target) {
+        case 'question': {
           // 如果是移動到 question，判斷該躝的最後一張，顏色是否相反，數字是否加一
           const targetBlockColumn = question[getNewColumnIndex()];
           // 如果那欄沒有牌就直接放了
@@ -289,14 +288,14 @@ const GameTable = (props) => {
           }
           break;
         }
-        case (target === 'temp'): {
+        case 'temp': {
           const targetBlockColumn = temp[getNewColumnIndex()];
           if (targetBlockColumn.length === 0) {
             return true;
           }
           break;
         }
-        case (target === 'over'): {
+        case 'over': {
           const targetBlockColumn = over[trunToOverIndex()];
           const targetBlockLastCard = targetBlockColumn[targetBlockColumn.length - 1];
           const targetBlockLastCardSuit = getPokerSuit(targetBlockLastCard);
@@ -312,6 +311,8 @@ const GameTable = (props) => {
           }
           break;
         }
+        case 'sameColumnBlock':
+          return false;
         default:
           throw new Error('Can not check can move');
       }
@@ -327,25 +328,54 @@ const GameTable = (props) => {
   };
 
   const producePokerCardColumn = (column, columnIndex, type) => {
-    // 0,1,2,3
     if (column.length === 0) {
       return type === 'over' && column.length === 0
         ? getPokerSuitSvgWith(getPokerSuitWithIndex(columnIndex), '#99A779', 48) : null;
     }
     let currentRowIndex = -1;
     const produceSingleCard = () => {
+      const isCanDrap = () => {
+        switch (type) {
+          case 'over':
+            return false;
+          case 'temp':
+            return true;
+          case 'question': {
+            if (currentRowIndex === column.length - 1) {
+              return true;
+            }
+            // 取得目前 temp empty count
+            const tempLayoutEmptyCount = tempLayout.reduce((count, value) => value.length === 0 ? count += 1 : count += 0, 0);
+            // 可移動數
+            const canDrapCardCount = tempLayoutEmptyCount + 1;
+            for (let i = currentRowIndex; i < column.length - 1; i += 1) {
+              if (!(getPokerColorWithSuit(getPokerSuit(column[i])) !== getPokerColorWithSuit(getPokerSuit(column[i + 1]))
+                && getPokerNumber(column[i]) - 1 === getPokerNumber(column[i + 1])
+                && column.length - (currentRowIndex + 1) < canDrapCardCount)) {
+                return false;
+              }
+            }
+            return true;
+          }
+          default:
+            throw new Error(`Can not check can drap with type: ${type}`);
+        }
+      };
+
       currentRowIndex += 1;
       const cardInformation = {
         type,
         cardId: column[currentRowIndex],
         arrayIndex: { column: columnIndex, row: currentRowIndex, },
       };
+
       return (
         <Card
+          canDrag={isCanDrap()}
           key={currentRowIndex}
           id={`${columnIndex}_${currentRowIndex}`}
           cardInformation={cardInformation}
-          position={type === 'quest'
+          position={type === 'question'
             ? getQuestBlockPosition(columnIndex, currentRowIndex) : getTempOrOverBlockPosition()
           }
         >
@@ -380,7 +410,7 @@ const GameTable = (props) => {
         <div className={styles.top_block}>
           {questionLayout.map((column, columnIndex) => (
             <div key={columnIndex} className={`${styles.questionCard} ${styles.put_card_block}`}>
-              {producePokerCardColumn(column, columnIndex, 'quest')}
+              {producePokerCardColumn(column, columnIndex, 'question')}
             </div>
           ))}
         </div>

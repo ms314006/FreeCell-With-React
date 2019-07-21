@@ -16,7 +16,7 @@ function getStyles(left, top) {
 
 const DraggableBox = (props) => {
   const {
-    id, position: { left, top, }, cardInformation, children,
+    id, position: { left, top, }, cardInformation, children, canDrag,
   } = props;
 
   const getPokerSuit = data => data.split('_')[0];
@@ -80,7 +80,7 @@ const DraggableBox = (props) => {
     item: {
       type: 'card', id, left, top, cardInformation,
     },
-    canDrag: cardInformation.type !== 'over',
+    canDrag,
     collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
