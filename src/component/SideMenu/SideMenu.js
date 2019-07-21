@@ -4,7 +4,7 @@ import * as actions from '../../actions/pokerCard.js';
 import styles from './index.scss';
 
 const SideMenu = (props) => {
-  const { restartGame, getPreviousRecord, } = props;
+  const { restartGame, getPreviousRecord, newGame, } = props;
   return (
     <div className={styles.sideMenu}>
       <div className={styles.timeBlock}>
@@ -26,7 +26,13 @@ const SideMenu = (props) => {
         >
           RESTART
         </button>
-        <button type="button" className={styles.button}>NEW GAME</button>
+        <button
+          type="button"
+          className={styles.button}
+          onClick={newGame}
+        >
+          NEW GAME
+        </button>
       </div>
     </div>
   );
@@ -35,6 +41,7 @@ const SideMenu = (props) => {
 const mapStateToDispatch = dispatch => ({
   restartGame: () => { dispatch(actions.restartGame()); },
   getPreviousRecord: () => { dispatch(actions.getPreviousRecord()); },
+  newGame: () => { dispatch(actions.newGame()); },
 });
 
 export default connect(null, mapStateToDispatch)(SideMenu);

@@ -5,33 +5,23 @@ import {
   ADD_OPERATION_RECORD,
   RESTART_GAME,
   GET_PREVIOUS_RECORD,
+  NEW_GAME
 } from '../actions/pokerCard';
+import questions from '../assets/questions.js';
+
+const getRandomQuest = () => {
+  const getRandom = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  return JSON.parse(JSON.stringify(questions[getRandom(0, questions.length - 1)]));
+};
+let newQuest = getRandomQuest();
 
 export const initState = {
-  questionLayout: [
-    ['heart_9', 'spades_7', 'club_10', 'diamond_2', 'heart_2', 'heart_1', 'club_1'],
-    ['spades_13', 'diamond_11', 'diamond_4', 'spades_3', 'diamond_1'],
-    ['club_12', 'club_11', 'diamond_8', 'spades_6', 'spades_4', 'heart_12', 'club_3'],
-    ['spades_9', 'heart_10', 'club_6', 'club_9', 'club_4', 'diamond_5', 'club_2'],
-    ['club_5', 'diamond_13', 'heart_5', 'diamond_6', 'club_13', 'diamond_12', 'spades_11', 'spades_1'],
-    ['heart_8', 'club_7', 'club_8', 'heart_4', 'diamond_3', 'spades_2'],
-    ['diamond_9', 'diamond_7', 'heart_11', 'heart_13', 'spades_5', 'heart_3'],
-    ['diamond_10', 'spades_10', 'spades_12', 'spades_8', 'heart_7', 'heart_6']
-  ],
+  questionLayout: newQuest,
   tempLayout: [[], [], [], []],
   overLayout: [[], [], [], []],
   operationRecord: [{
     recordNumber: 0,
-    questionLayout: [
-      ['heart_9', 'spades_7', 'club_10', 'diamond_2', 'heart_2', 'heart_1', 'club_1'],
-      ['spades_13', 'diamond_11', 'diamond_4', 'spades_3', 'diamond_1'],
-      ['club_12', 'club_11', 'diamond_8', 'spades_6', 'spades_4', 'heart_12', 'club_3'],
-      ['spades_9', 'heart_10', 'club_6', 'club_9', 'club_4', 'diamond_5', 'club_2'],
-      ['club_5', 'diamond_13', 'heart_5', 'diamond_6', 'club_13', 'diamond_12', 'spades_11', 'spades_1'],
-      ['heart_8', 'club_7', 'club_8', 'heart_4', 'diamond_3', 'spades_2'],
-      ['diamond_9', 'diamond_7', 'heart_11', 'heart_13', 'spades_5', 'heart_3'],
-      ['diamond_10', 'spades_10', 'spades_12', 'spades_8', 'heart_7', 'heart_6']
-    ],
+    questionLayout: newQuest,
     tempLayout: [[], [], [], []],
     overLayout: [[], [], [], []],
   }],
@@ -76,6 +66,21 @@ const pokerCard = (state = initState, action) => {
         ...state,
         ...state.operationRecord[getPreciousRecoreIndex()],
         operationRecord: state.operationRecord.slice(0, getPreciousRecoreIndex()),
+      };
+    }
+    case NEW_GAME: {
+      newQuest = getRandomQuest();
+      return {
+        ...state,
+        questionLayout: newQuest,
+        tempLayout: [[], [], [], []],
+        overLayout: [[], [], [], []],
+        operationRecord: [{
+          recordNumber: 0,
+          questionLayout: newQuest,
+          tempLayout: [[], [], [], []],
+          overLayout: [[], [], [], []],
+        }],
       };
     }
     default:
