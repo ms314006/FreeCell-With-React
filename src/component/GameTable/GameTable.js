@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDrop } from 'react-dnd';
 import Card from '../Card';
 import styles from './index.scss';
@@ -16,6 +16,12 @@ const GameTable = (props) => {
     ['diamond_9', 'diamond_7', 'heart_3', 'heart_11', 'spades_5', 'heart_13'],
     ['diamond_10', 'spades_10', 'heart_6', 'heart_7', 'spades_12', 'spades_8']
   ]);
+  useEffect(() => {
+    const questionEmptyColumnCount = questionLayout.reduce((count, value) => value.length === 0 ? count += 1 : count += 0, 0);
+    if (questionEmptyColumnCount === 8) {
+      alert('好啦！恭喜你獲勝！');
+    }
+  }, [questionLayout]);
 
   const [tempLayout, setTempLayout] = useState([[], [], [], []]);
 
@@ -389,6 +395,7 @@ const GameTable = (props) => {
   const moveBox = useCallback(
     (item, left, top) => {
       moveCardPosition(item, left, top);
+      
     },
     [questionLayout, tempLayout, overLayout]
   );
