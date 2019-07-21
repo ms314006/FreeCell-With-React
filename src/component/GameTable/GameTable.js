@@ -50,6 +50,21 @@ const GameTable = (props) => {
     return { left: poritionX, top: poritionY, };
   };
 
+  const getPokerSuitWithIndex = (index) => {
+    switch (index) {
+      case 0:
+        return 'spades';
+      case 1:
+        return 'heart';
+      case 2:
+        return 'club';
+      case 3:
+        return 'diamond';
+      default:
+        throw new Error(`Can not get suit for index: ${index}`);
+    }
+  };
+
   const getPokerSuitSvgWith = (suitType, color, size = 20) => {
     let correspondSVG;
     switch (suitType) {
@@ -103,6 +118,7 @@ const GameTable = (props) => {
       const movePositionX = Math.floor((x + 40) / 100);
       return getOriginColumnIndex() + movePositionX;
     };
+
     const trunToOverIndex = () => getNewColumnIndex() - 4;
 
     const isMoveToTempOrOverBlock = () => {
@@ -184,61 +200,135 @@ const GameTable = (props) => {
       setOverLayout(cloneOverArray);
     };
 
-    // 經過檢查
-    if (getOriginColumnIndex() === getNewColumnIndex()
-      && (
-        (item.cardInformation.type === 'temp' && isMoveToTempOrOverBlock())
-        || (item.cardInformation.type === 'quest' && !isMoveToTempOrOverBlock())
-      )) {
-      return;
-    }
+    // 封裝判斷
+    const getMoveOutBlcokAndTargetBlock = () => {
+      switch (true) {
+        case (getOriginColumnIndex() === getNewColumnIndex() && item.cardInformation.type === 'temp' && isMoveToTempOrOverBlock()):
+          return ['temp', 'sameColumnBlock'];
+        case (getOriginColumnIndex() === getNewColumnIndex() && item.cardInformation.type === 'quest' && !isMoveToTempOrOverBlock()):
+          return ['question', 'sameColumnBlock'];
+        case (item.cardInformation.type === 'temp' && !isMoveToTempOrOverBlock()):
+          return ['temp', 'question'];
+        case (item.cardInformation.type === 'temp' && getNewColumnIndex() < 4 && isMoveToTempOrOverBlock()):
+          return ['temp', 'temp'];
+        case (item.cardInformation.type === 'temp' && getNewColumnIndex() > 3 && isMoveToTempOrOverBlock()):
+          return ['temp', 'over'];
+        case (!isMoveToTempOrOverBlock()):
+          return ['question', 'question'];
+        case (getNewColumnIndex() < 4 && isMoveToTempOrOverBlock()):
+          return ['question', 'temp'];
+        case (item.cardInformation.type === 'quest' && getNewColumnIndex() > 3 && isMoveToTempOrOverBlock()):
+          return ['question', 'over'];
+        default:
+          throw new Error('Can not get curreponse action');
+      }
+    };
 
     // 操作
-    switch (true) {
-      case (item.cardInformation.type === 'temp' && !isMoveToTempOrOverBlock()):
-        moveTempToQuestion();
-        break;
-      case (item.cardInformation.type === 'temp' && getNewColumnIndex() < 4 && isMoveToTempOrOverBlock()):
-        moveTempToTemp();
-        break;
-      case (item.cardInformation.type === 'temp' && getNewColumnIndex() > 3 && isMoveToTempOrOverBlock()):
-        moveTempToOver();
-        break;
-      case (!isMoveToTempOrOverBlock()):
-        moveQuestionToQuestion();
-        break;
-      case (getNewColumnIndex() < 4 && isMoveToTempOrOverBlock()):
-        moveQuestionToTemp();
-        break;
-      case (item.cardInformation.type === 'quest' && getNewColumnIndex() > 3 && isMoveToTempOrOverBlock()):
-        moveQuestionToOver();
-        break;
-      default:
-        throw new Error('Can not get curreponse action');
-    }
+    const moveCardToTargetBlock = () => {
+      const [moveout, target] = getMoveOutBlcokAndTargetBlock();
+      switch (true) {
+        case (target === 'sameColumnBlock'):
+          return;
+        case (moveout === 'temp' && target === 'question'):
+          moveTempToQuestion();
+          break;
+        case (moveout === 'temp' && target === 'temp'):
+          moveTempToTemp();
+          break;
+        case (moveout === 'temp' && target === 'over'):
+          moveTempToOver();
+          break;
+        case (moveout === 'question' && target === 'question'):
+          moveQuestionToQuestion();
+          break;
+        case (moveout === 'question' && target === 'temp'):
+          moveQuestionToTemp();
+          break;
+        case (moveout === 'question' && target === 'over'):
+          moveQuestionToOver();
+          break;
+        default:
+          throw new Error('Can not get curreponse move action');
+      }
+    };
 
-    // 記錄這次的操作記錄
-    addOperationRecord();
+    // 檢查
+    const isCanMove = (question, temp, over) => {
+      const getPokerSuit = (data = '') => data.split('_')[0];
+      const getPokerNumber = (data = '') => Number(data.split('_')[1]);
+      const getPokerColorWithSuit = (suit) => {
+        switch (suit) {
+          case 'spades':
+          case 'club':
+            return '#8497C6';
+          case 'heart':
+          case 'diamond':
+            return '#EE957E';
+          default:
+            throw new Error(`Can not get color with suit name: ${suit}`);
+        }
+      };
+      const [, target] = getMoveOutBlcokAndTargetBlock();
+      switch (true) {
+        case (target === 'question'): {
+          // 如果是移動到 question，判斷該躝的最後一張，顏色是否相反，數字是否加一
+          const targetBlockColumn = question[getNewColumnIndex()];
+          // 如果那欄沒有牌就直接放了
+          if (targetBlockColumn.length === 0) {
+            return true;
+          }
+          const targetBlockLastCard = targetBlockColumn[targetBlockColumn.length - 1];
+          const targetBlockLastCardColor = getPokerColorWithSuit(getPokerSuit(targetBlockLastCard));
+          const targetBlockLastCardNumber = getPokerNumber(targetBlockLastCard);
+          const moveOutCardColor = getPokerColorWithSuit(getPokerSuit(item.cardInformation.cardId));
+          const moveOutCardNumber = getPokerNumber(item.cardInformation.cardId);
+          if (targetBlockLastCardColor !== moveOutCardColor
+            && targetBlockLastCardNumber - 1 === moveOutCardNumber) {
+            return true;
+          }
+          break;
+        }
+        case (target === 'temp'): {
+          const targetBlockColumn = temp[getNewColumnIndex()];
+          if (targetBlockColumn.length === 0) {
+            return true;
+          }
+          break;
+        }
+        case (target === 'over'): {
+          const targetBlockColumn = over[trunToOverIndex()];
+          const targetBlockLastCard = targetBlockColumn[targetBlockColumn.length - 1];
+          const targetBlockLastCardSuit = getPokerSuit(targetBlockLastCard);
+          const targetBlockLastCardNumber = getPokerNumber(targetBlockLastCard);
+          const targetBlockCorrespondSuit = getPokerSuitWithIndex(trunToOverIndex());
+          const moveOutCardSuit = getPokerSuit(item.cardInformation.cardId);
+          const moveOutCardNumber = getPokerNumber(item.cardInformation.cardId);
+          if ((targetBlockColumn.length === 0 && moveOutCardNumber === 1
+            && targetBlockCorrespondSuit === moveOutCardSuit)
+            || (targetBlockLastCardSuit === moveOutCardSuit
+              && targetBlockLastCardNumber + 1 === moveOutCardNumber)) {
+            return true;
+          }
+          break;
+        }
+        default:
+          throw new Error('Can not check can move');
+      }
+      return false;
+    };
+
+    if (isCanMove(questionLayout, tempLayout, overLayout)) {
+      // 移動卡片
+      moveCardToTargetBlock();
+      // 記錄這次的操作
+      addOperationRecord();
+    }
   };
 
   const producePokerCardColumn = (column, columnIndex, type) => {
     // 0,1,2,3
     if (column.length === 0) {
-      const getPokerSuitWithIndex = (index) => {
-        switch (index) {
-          case 0:
-            return 'spades';
-          case 1:
-            return 'heart';
-          case 2:
-            return 'club';
-          case 3:
-            return 'diamond';
-          default:
-            throw new Error(`Can not get suit for index: ${index}`);
-        }
-      };
-
       return type === 'over' && column.length === 0
         ? getPokerSuitSvgWith(getPokerSuitWithIndex(columnIndex), '#99A779', 48) : null;
     }
