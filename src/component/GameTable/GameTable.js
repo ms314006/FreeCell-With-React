@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDrop } from 'react-dnd';
 import Card from '../Card';
+import PokerGame from '../../lib/PokerGame';
+import PokerCard from '../../lib/PokerCard.js';
 import styles from './index.scss';
 
 
@@ -54,74 +56,6 @@ const GameTable = (props) => {
     tempLayout: [[], [], [], []],
     overLayout: [[], [], [], []],
   }]);
-
-  const getQuestBlockPosition = () => {
-    const poritionX = 0;
-    const poritionY = 30;
-    return { left: poritionX, top: poritionY, };
-  };
-
-  const getTempOrOverBlockPosition = () => {
-    const poritionX = -2;
-    const poritionY = -2;
-    return { left: poritionX, top: poritionY, };
-  };
-
-  const getPokerSuitWithIndex = (index) => {
-    switch (index) {
-      case 0:
-        return 'spades';
-      case 1:
-        return 'heart';
-      case 2:
-        return 'club';
-      case 3:
-        return 'diamond';
-      default:
-        throw new Error(`Can not get suit for index: ${index}`);
-    }
-  };
-
-  const getPokerColorWithSuit = (suit) => {
-    switch (suit) {
-      case 'spades':
-      case 'club':
-        return '#8497C6';
-      case 'heart':
-      case 'diamond':
-        return '#EE957E';
-      default:
-        throw new Error(`Can not get color with suit name: ${suit}`);
-    }
-  };
-
-  const getPokerSuitSvgWith = (suitType, color, size = 20) => {
-    let correspondSVG;
-    switch (suitType) {
-      case 'spades':
-        correspondSVG = <path fill={color} d="M12,2C9,7 4,9 4,14C4,16 6,18 8,18C9,18 10,18 11,17C11,17 11.32,19 9,22H15C13,19 13,17 13,17C14,18 15,18 16,18C18,18 20,16 20,14C20,9 15,7 12,2Z" />;
-        break;
-      case 'club':
-        correspondSVG = <path fill={color} d="M12,2C14.3,2 16.3,4 16.3,6.2C16.21,8.77 14.34,9.83 14.04,10C15.04,9.5 16.5,9.5 16.5,9.5C19,9.5 21,11.3 21,13.8C21,16.3 19,18 16.5,18C16.5,18 15,18 13,17C13,17 12.7,19 15,22H9C11.3,19 11,17 11,17C9,18 7.5,18 7.5,18C5,18 3,16.3 3,13.8C3,11.3 5,9.5 7.5,9.5C7.5,9.5 8.96,9.5 9.96,10C9.66,9.83 7.79,8.77 7.7,6.2C7.7,4 9.7,2 12,2Z" />;
-        break;
-      case 'heart':
-        correspondSVG = <path fill={color} d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z" />;
-        break;
-      case 'diamond':
-        correspondSVG = <path fill={color} d="M19,12L12,22L5,12L12,2" />;
-        break;
-      default:
-        throw new Error(`Can not get SVG with suit name: ${suitType}`);
-    }
-    return (
-      <svg style={{ width: `${size}px`, height: `${size}px`, }} viewBox="0 0 24 24">
-        {correspondSVG}
-      </svg>
-    );
-  };
-
-  const getPokerSuit = (data = '') => data.split('_')[0];
-  const getPokerNumber = (data = '') => Number(data.split('_')[1]);
 
   const addOperationRecord = () => {
     const cloneOperationRecord = JSON.parse(JSON.stringify(operationRecord));
@@ -236,12 +170,13 @@ const GameTable = (props) => {
       const cloneQuestArray = questionLayout.map(column => column.map(row => row));
       const cloneOverArray = overLayout.map(column => column.map(row => row));
       let moveOutColumn = cloneOverArray[trunToOverIndex(getOriginColumnIndex())];
+      const moveOutCard = new PokerCard(moveOutColumn[0]);
       const targetColumn = cloneQuestArray[getNewColumnIndex()];
       targetColumn.push(moveOutColumn[0]);
-      if (getPokerNumber(moveOutColumn[0]) === 1) {
+      if (moveOutCard.getPokerNumber() === 1) {
         moveOutColumn = moveOutColumn.slice(0, getOriginRowIndex());
       } else {
-        moveOutColumn = [`${getPokerSuit(moveOutColumn[0])}_${getPokerNumber(moveOutColumn[0]) - 1}`];
+        moveOutColumn = [`${moveOutCard.getPokerSuit()}_${moveOutCard.getPokerSuit() - 1}`];
       }
       cloneOverArray.splice(trunToOverIndex(getOriginColumnIndex()), 1, moveOutColumn);
       cloneQuestArray.splice(getNewColumnIndex(), 1, targetColumn);
@@ -253,12 +188,13 @@ const GameTable = (props) => {
       const cloneTempArray = tempLayout.map(column => column.map(row => row));
       const cloneOverArray = overLayout.map(column => column.map(row => row));
       let moveOutColumn = cloneOverArray[trunToOverIndex(getOriginColumnIndex())];
+      const moveOutCard = new PokerCard(moveOutColumn[0]);
       const targetColumn = cloneTempArray[getNewColumnIndex()];
       targetColumn.push(moveOutColumn[moveOutColumn.length - 1]);
-      if (getPokerNumber(moveOutColumn[0]) === 1) {
+      if (moveOutCard.getPokerNumber() === 1) {
         moveOutColumn = moveOutColumn.slice(0, getOriginRowIndex());
       } else {
-        moveOutColumn = [`${getPokerSuit(moveOutColumn[0])}_${getPokerNumber(moveOutColumn[0]) - 1}`];
+        moveOutColumn = [`${moveOutCard.getPokerSuit()}_${moveOutCard.getPokerNumber() - 1}`];
       }
       cloneOverArray.splice(trunToOverIndex(getOriginColumnIndex()), 1, moveOutColumn);
       cloneTempArray.splice(getNewColumnIndex(), 1, targetColumn);
@@ -338,13 +274,10 @@ const GameTable = (props) => {
           if (targetBlockColumn.length === 0) {
             return true;
           }
-          const targetBlockLastCard = targetBlockColumn[targetBlockColumn.length - 1];
-          const targetBlockLastCardColor = getPokerColorWithSuit(getPokerSuit(targetBlockLastCard));
-          const targetBlockLastCardNumber = getPokerNumber(targetBlockLastCard);
-          const moveOutCardColor = getPokerColorWithSuit(getPokerSuit(item.cardInformation.cardId));
-          const moveOutCardNumber = getPokerNumber(item.cardInformation.cardId);
-          if (targetBlockLastCardColor !== moveOutCardColor
-            && targetBlockLastCardNumber - 1 === moveOutCardNumber) {
+          const targetBlockLastCard = new PokerCard(targetBlockColumn[targetBlockColumn.length - 1]);
+          const moveOutCard = new PokerCard(item.cardInformation.cardId);
+          if (targetBlockLastCard.getPokerMainColor() !== moveOutCard.getPokerMainColor()
+            && targetBlockLastCard.getPokerNumber() - 1 === moveOutCard.getPokerNumber()) {
             return true;
           }
           break;
@@ -358,16 +291,13 @@ const GameTable = (props) => {
         }
         case 'over': {
           const targetBlockColumn = over[trunToOverIndex(getNewColumnIndex())];
-          const targetBlockLastCard = targetBlockColumn[targetBlockColumn.length - 1];
-          const targetBlockLastCardSuit = getPokerSuit(targetBlockLastCard);
-          const targetBlockLastCardNumber = getPokerNumber(targetBlockLastCard);
-          const targetBlockCorrespondSuit = getPokerSuitWithIndex(trunToOverIndex(getNewColumnIndex()));
-          const moveOutCardSuit = getPokerSuit(item.cardInformation.cardId);
-          const moveOutCardNumber = getPokerNumber(item.cardInformation.cardId);
-          if ((targetBlockColumn.length === 0 && moveOutCardNumber === 1
-            && targetBlockCorrespondSuit === moveOutCardSuit)
-            || (targetBlockLastCardSuit === moveOutCardSuit
-              && targetBlockLastCardNumber + 1 === moveOutCardNumber)) {
+          const targetBlockLastCard = new PokerCard(targetBlockColumn[targetBlockColumn.length - 1]);
+          const targetBlockCorrespondSuit = PokerCard.getPokerSuitWithIndex(trunToOverIndex(getNewColumnIndex()));
+          const moveOutCard = new PokerCard(item.cardInformation.cardId);
+          if ((targetBlockColumn.length === 0 && moveOutCard.getPokerNumber() === 1
+            && targetBlockCorrespondSuit === moveOutCard.getPokerSuit())
+            || (targetBlockLastCard.getPokerSuit() === moveOutCard.getPokerSuit()
+              && targetBlockLastCard.getPokerNumber() === moveOutCard.getPokerNumber())) {
             return true;
           }
           break;
@@ -389,10 +319,10 @@ const GameTable = (props) => {
   };
 
   const producePokerCardColumn = (column, columnIndex, type) => {
+    const pokerGame = new PokerGame(type, column, columnIndex);
 
-    if (column.length === 0) {
-      return type === 'over' && column.length === 0
-        ? getPokerSuitSvgWith(getPokerSuitWithIndex(columnIndex), '#99A779', 48) : null;
+    if (pokerGame.isBlockDataEmpty()) {
+      return pokerGame.getEmptyContentBlock();
     }
 
     const getCardId = (cardInformation) => {
@@ -424,8 +354,10 @@ const GameTable = (props) => {
             // 可移動數
             const canDrapCardCount = tempLayoutEmptyCount + 1;
             for (let i = currentRowIndex; i < column.length - 1; i += 1) {
-              if (!(getPokerColorWithSuit(getPokerSuit(column[i])) !== getPokerColorWithSuit(getPokerSuit(column[i + 1]))
-                && getPokerNumber(column[i]) - 1 === getPokerNumber(column[i + 1])
+              const currentPokerCard = new PokerCard(column[i]);
+              const nextPokerCard = new PokerCard(column[i + 1]);
+              if (!(currentPokerCard.getPokerMainColor() !== nextPokerCard.getPokerMainColor()
+                && currentPokerCard.getPokerNumber - 1 === nextPokerCard.getPokerNumber
                 && column.length - (currentRowIndex + 1) < canDrapCardCount)) {
                 return false;
               }
@@ -450,9 +382,7 @@ const GameTable = (props) => {
           key={currentRowIndex}
           id={getCardId(cardInformation)}
           cardInformation={cardInformation}
-          position={type === 'question'
-            ? getQuestBlockPosition(columnIndex, currentRowIndex) : getTempOrOverBlockPosition()
-          }
+          position={pokerGame.getCardPositionInBlock()}
         >
           {currentRowIndex < column.length - 1 ? produceSingleCard() : null}
         </Card>
