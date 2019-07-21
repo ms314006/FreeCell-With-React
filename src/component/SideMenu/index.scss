@@ -1,6 +1,6 @@
 .sideMenu {
   display: grid;
-  grid-template-rows: 4fr 2fr;
+  grid-template-rows: 4fr 3fr;
   background-color: #D8E6BA;
 
   .timeBlock {
@@ -23,6 +23,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    color: #99A779;
+    font-family: 'Fascinate', cursive;
+    font-size: 36px;
   }
 
   .button {

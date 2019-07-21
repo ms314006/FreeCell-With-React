@@ -239,7 +239,7 @@ const GameTable = (props) => {
           if ((targetBlockColumn.length === 0 && moveOutCard.getPokerNumber() === 1
             && targetBlockCorrespondSuit === moveOutCard.getPokerSuit())
             || (targetBlockLastCard.getPokerSuit() === moveOutCard.getPokerSuit()
-              && targetBlockLastCard.getPokerNumber() === moveOutCard.getPokerNumber())) {
+              && targetBlockLastCard.getPokerNumber() + 1 === moveOutCard.getPokerNumber())) {
             return true;
           }
           break;

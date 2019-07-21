@@ -1,4 +1,5 @@
 import {
+  ADD_SECONDS,
   SET_QUESTION_LAYOUT,
   SET_TEMP_LAYOUT,
   SET_OVER_LAYOUT,
@@ -16,6 +17,8 @@ const getRandomQuest = () => {
 let newQuest = getRandomQuest();
 
 export const initState = {
+  success: false,
+  spendSeconds: 0,
   questionLayout: newQuest,
   tempLayout: [[], [], [], []],
   overLayout: [[], [], [], []],
@@ -29,11 +32,24 @@ export const initState = {
 
 const pokerCard = (state = initState, action) => {
   switch (action.type) {
-    case SET_QUESTION_LAYOUT:
+    case ADD_SECONDS:
       return {
         ...state,
+        spendSeconds: state.spendSeconds + (state.success ? 0 : 1),
+      };
+    case SET_QUESTION_LAYOUT: {
+      const isSuccess = () => {
+        const questionEmptyColumnCount = action.payload.questionLayout.reduce(
+          (count, value) => value.length === 0 ? count += 1 : count += 0, 0
+        );
+        return questionEmptyColumnCount === 8;
+      };
+      return {
+        ...state,
+        success: isSuccess(),
         questionLayout: action.payload.questionLayout,
       };
+    }
     case SET_TEMP_LAYOUT:
       return {
         ...state,
@@ -59,6 +75,7 @@ const pokerCard = (state = initState, action) => {
       return {
         ...state,
         ...initState,
+        spendSeconds: 0,
       };
     case GET_PREVIOUS_RECORD: {
       const getPreciousRecoreIndex = () => state.operationRecord.length - 1;
@@ -72,6 +89,7 @@ const pokerCard = (state = initState, action) => {
       newQuest = getRandomQuest();
       return {
         ...state,
+        spendSeconds: 0,
         questionLayout: newQuest,
         tempLayout: [[], [], [], []],
         overLayout: [[], [], [], []],
