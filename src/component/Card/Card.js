@@ -1,51 +1,17 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
+import PokerCard from '../../lib/PokerCard.js';
 import styles from './index.scss';
-
-function getStyles(left, top) {
-  return {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    position: 'absolute',
-    width: '80px',
-    left,
-    top,
-  };
-}
 
 const DraggableBox = (props) => {
   const {
     id, position: { left, top, }, cardInformation, children, canDrag,
   } = props;
 
-  const getPokerSuit = data => data.split('_')[0];
-  const getPokerNumber = data => Number(data.split('_')[1]);
-  const getPokerColorWithSuit = (suit) => {
-    switch (suit) {
-      case 'spades':
-      case 'club':
-        return '#8497C6';
-      case 'heart':
-      case 'diamond':
-        return '#EE957E';
-      default:
-        throw new Error(`Can not get color with suit name: ${suit}`);
-    }
-  };
-  const getBackgroundColorWithSuit = (suit) => {
-    switch (suit) {
-      case 'spades':
-      case 'club':
-        return '#DCE2F1';
-      case 'heart':
-      case 'diamond':
-        return '#FDE6E0';
-      default:
-        throw new Error(`Can not get background color with suit name: ${suit}`);
-    }
-  };
+  // 創建 PokerCard 的 instance
+  const pokerCard = new PokerCard(cardInformation.cardId);
 
+  // 產生畫面的部分先留著
   const getPokerSuitSvgWith = (suitType, color, size = 20) => {
     let correspondSVG;
     switch (suitType) {
@@ -72,7 +38,7 @@ const DraggableBox = (props) => {
   };
 
   const getPokerNumberWith = (suitType, num) => {
-    const color = getPokerColorWithSuit(suitType);
+    const color = pokerCard.getPokerMainColor();
     return <span className={styles.cardFont} style={{ color, }}>{num}</span>;
   };
 
@@ -87,24 +53,22 @@ const DraggableBox = (props) => {
   });
 
   return (
-    <div ref={drag} style={getStyles(left, top)}>
+    <div ref={drag} className={styles.dragBlock} style={{ left, top, }}>
       <div
         className={styles.card}
         style={{
-          border: `1px solid ${getPokerColorWithSuit(getPokerSuit(cardInformation.cardId))}`,
-          backgroundColor: getBackgroundColorWithSuit(getPokerSuit(cardInformation.cardId)),
+          border: `1px solid ${pokerCard.getPokerMainColor()}`,
+          backgroundColor: pokerCard.getPokerCardBackgroundColor(),
         }}
       >
         <div className={styles.cardInformation}>
           {getPokerSuitSvgWith(
-            getPokerSuit(cardInformation.cardId), getPokerColorWithSuit(getPokerSuit(cardInformation.cardId))
+            pokerCard.getPokerSuit(), pokerCard.getPokerMainColor()
           )}
-          {getPokerNumberWith(
-            getPokerSuit(cardInformation.cardId), getPokerNumber(cardInformation.cardId)
-          )}
+          {getPokerNumberWith(pokerCard.getPokerSuit(), pokerCard.getPokerNumber())}
         </div>
         {getPokerSuitSvgWith(
-          getPokerSuit(cardInformation.cardId), getPokerColorWithSuit(getPokerSuit(cardInformation.cardId)), 60
+          pokerCard.getPokerSuit(), pokerCard.getPokerMainColor(), 60
         )}
       </div>
       {children}

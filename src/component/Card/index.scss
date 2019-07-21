@@ -1,3 +1,11 @@
+.dragBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: absolute;
+  width: 80px;
+}
+
 .card {
     box-sizing: border-box;
     padding: 6px;
