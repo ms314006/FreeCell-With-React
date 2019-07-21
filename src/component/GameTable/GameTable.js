@@ -1,75 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
+import { connect } from 'react-redux';
 import { useDrop } from 'react-dnd';
 import Card from '../Card';
-import PokerGame from '../../lib/PokerGame';
+import PokerGame from '../../lib/PokerGame.js';
 import PokerCard from '../../lib/PokerCard.js';
+import * as actions from '../../actions/pokerCard.js';
 import styles from './index.scss';
 
-
 const GameTable = (props) => {
-  const {} = props;
-  /*
-  const [questionLayout, setQuestionLayout] = useState([
-    ['heart_2', 'club_1', 'heart_9', 'heart_1', 'diamond_2', 'spades_7', 'club_10'],
-    ['spades_13', 'diamond_1', 'diamond_11', 'spades_3', 'diamond_4'],
-    ['club_12', 'club_11', 'diamond_8', 'spades_6', 'spades_4', 'heart_12', 'club_3'],
-    ['club_4', 'spades_9', 'heart_10', 'club_6', 'diamond_5', 'club_9', 'club_2'],
-    ['club_5', 'diamond_13', 'heart_5', 'spades_1', 'diamond_6', 'club_13', 'diamond_12', 'spades_11'],
-    ['heart_8', 'heart_4', 'diamond_3', 'club_7', 'club_8', 'spades_2'],
-    ['diamond_9', 'diamond_7', 'heart_3', 'heart_11', 'spades_5', 'heart_13'],
-    ['diamond_10', 'spades_10', 'heart_6', 'heart_7', 'spades_12', 'spades_8']
-  ]);
-  */
-  const [questionLayout, setQuestionLayout] = useState([
-    ['heart_9', 'spades_7', 'club_10', 'diamond_2', 'heart_2', 'heart_1', 'club_1'],
-    ['spades_13', 'diamond_11', 'diamond_4', 'spades_3', 'diamond_1'],
-    ['club_12', 'club_11', 'diamond_8', 'spades_6', 'spades_4', 'heart_12', 'club_3'],
-    ['spades_9', 'heart_10', 'club_6', 'club_9', 'club_4', 'diamond_5', 'club_2'],
-    ['club_5', 'diamond_13', 'heart_5', 'diamond_6', 'club_13', 'diamond_12', 'spades_11', 'spades_1'],
-    ['heart_8', 'club_7', 'club_8', 'heart_4', 'diamond_3', 'spades_2'],
-    ['diamond_9', 'diamond_7', 'heart_11', 'heart_13', 'spades_5', 'heart_3'],
-    ['diamond_10', 'spades_10', 'spades_12', 'spades_8', 'heart_7', 'heart_6']
-  ]);
-  useEffect(() => {
-    const questionEmptyColumnCount = questionLayout.reduce((count, value) => value.length === 0 ? count += 1 : count += 0, 0);
-    if (questionEmptyColumnCount === 8) {
-      alert('好啦！恭喜你獲勝！');
-    }
-  }, [questionLayout]);
-
-  const [tempLayout, setTempLayout] = useState([[], [], [], []]);
-
-  const [overLayout, setOverLayout] = useState([[], [], [], []]);
-
-  const [operationRecord, setOperationRecord] = useState([{
-    recordNumber: 0,
-    questionLayout: [
-      ['heart_9', 'spades_7', 'club_10', 'diamond_2', 'heart_2', 'heart_1', 'club_1'],
-      ['spades_13', 'diamond_11', 'diamond_4', 'spades_3', 'diamond_1'],
-      ['club_12', 'club_11', 'diamond_8', 'spades_6', 'spades_4', 'heart_12', 'club_3'],
-      ['spades_9', 'heart_10', 'club_6', 'club_9', 'club_4', 'diamond_5', 'club_2'],
-      ['club_5', 'diamond_13', 'heart_5', 'diamond_6', 'club_13', 'diamond_12', 'spades_11', 'spades_1'],
-      ['heart_8', 'club_7', 'club_8', 'heart_4', 'diamond_3', 'spades_2'],
-      ['diamond_9', 'diamond_7', 'heart_11', 'heart_13', 'spades_5', 'heart_3'],
-      ['diamond_10', 'spades_10', 'spades_12', 'spades_8', 'heart_7', 'heart_6']
-    ],
-    tempLayout: [[], [], [], []],
-    overLayout: [[], [], [], []],
-  }]);
-
-  const addOperationRecord = () => {
-    const cloneOperationRecord = JSON.parse(JSON.stringify(operationRecord));
-    // 取得新編號
-    const newNumber = cloneOperationRecord.length;
-    // 加入紀錄
-    cloneOperationRecord.push({
-      recordNumber: newNumber,
-      questionLayout: questionLayout.map(column => column.map(row => row)),
-      tempLayout: tempLayout.map(column => column.map(row => row)),
-      overLayout: overLayout.map(column => column.map(row => row)),
-    });
-    setOperationRecord(cloneOperationRecord);
-  };
+  const {
+    questionLayout, tempLayout, overLayout,
+    setQuestionLayout, setTempLayout, setOverLayout, addOperationRecord,
+  } = props;
 
   const moveCardPosition = (item, x, y) => {
     const getOriginColumnIndex = () => Number(item.id.split('_')[0]);
@@ -314,7 +256,11 @@ const GameTable = (props) => {
       // 移動卡片
       moveCardToTargetBlock();
       // 記錄這次的操作
-      addOperationRecord();
+      addOperationRecord({
+        questionLayout: questionLayout.map(column => column.map(row => row)),
+        tempLayout: tempLayout.map(column => column.map(row => row)),
+        overLayout: overLayout.map(column => column.map(row => row)),
+      });
     }
   };
 
@@ -357,7 +303,7 @@ const GameTable = (props) => {
               const currentPokerCard = new PokerCard(column[i]);
               const nextPokerCard = new PokerCard(column[i + 1]);
               if (!(currentPokerCard.getPokerMainColor() !== nextPokerCard.getPokerMainColor()
-                && currentPokerCard.getPokerNumber - 1 === nextPokerCard.getPokerNumber
+                && currentPokerCard.getPokerNumber() - 1 === nextPokerCard.getPokerNumber()
                 && column.length - (currentRowIndex + 1) < canDrapCardCount)) {
                 return false;
               }
@@ -444,4 +390,18 @@ const GameTable = (props) => {
   );
 };
 
-export default GameTable;
+const mapStateToProps = state => ({
+  questionLayout: state.questionLayout,
+  tempLayout: state.tempLayout,
+  overLayout: state.overLayout,
+  operationRecord: state.operationRecord,
+});
+
+const mapStateToDispatch = dispatch => ({
+  setQuestionLayout: (questionLayout) => { dispatch(actions.setQuestionLayout({ questionLayout, })); },
+  setTempLayout: (tempLayout) => { dispatch(actions.setTempLayout({ tempLayout, })); },
+  setOverLayout: (overLayout) => { dispatch(actions.setOverLayout({ overLayout, })); },
+  addOperationRecord: (operationRecord) => { dispatch(actions.addOperationRecord({ operationRecord, })); },
+});
+
+export default connect(mapStateToProps, mapStateToDispatch)(GameTable);
